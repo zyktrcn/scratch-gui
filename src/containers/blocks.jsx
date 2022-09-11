@@ -10,9 +10,7 @@ import VM from 'scratch-vm';
 import log from '../lib/log.js';
 import Prompt from './prompt.jsx';
 import BlocksComponent from '../components/blocks/blocks.jsx';
-import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
-import CustomProcedures from './custom-procedures.jsx';
 import errorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
 import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
@@ -573,21 +571,6 @@ class Blocks extends React.Component {
                         vm={vm}
                         onCancel={this.handlePromptClose}
                         onOk={this.handlePromptCallback}
-                    />
-                ) : null}
-                {extensionLibraryVisible ? (
-                    <ExtensionLibrary
-                        vm={vm}
-                        onCategorySelected={this.handleCategorySelected}
-                        onRequestClose={onRequestCloseExtensionLibrary}
-                    />
-                ) : null}
-                {customProceduresVisible ? (
-                    <CustomProcedures
-                        options={{
-                            media: options.media
-                        }}
-                        onRequestClose={this.handleCustomProceduresClose}
                     />
                 ) : null}
             </React.Fragment>

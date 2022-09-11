@@ -2,27 +2,21 @@ import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import {injectIntl, intlShape} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
-import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
+import {Tabs, TabPanel} from 'react-tabs';
 import tabStyles from 'react-tabs/style/react-tabs.css';
 import VM from 'scratch-vm';
 import Renderer from 'scratch-render';
 
 import Blocks from '../../containers/blocks.jsx';
-import CostumeTab from '../../containers/costume-tab.jsx';
-import TargetPane from '../../containers/target-pane.jsx';
-import SoundTab from '../../containers/sound-tab.jsx';
 import StageWrapper from '../../containers/stage-wrapper.jsx';
 import Loader from '../loader/loader.jsx';
 import Box from '../box/box.jsx';
-import MenuBar from '../menu-bar/menu-bar.jsx';
-import CostumeLibrary from '../../containers/costume-library.jsx';
 import BackdropLibrary from '../../containers/backdrop-library.jsx';
 import Watermark from '../../containers/watermark.jsx';
 
-import Backpack from '../../containers/backpack.jsx';
 import WebGlModal from '../../containers/webgl-modal.jsx';
 import TipsLibrary from '../../containers/tips-library.jsx';
 import Cards from '../../containers/cards.jsx';
@@ -35,18 +29,6 @@ import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
 
 import styles from './gui.css';
-import addExtensionIcon from './icon--extensions.svg';
-import codeIcon from './icon--code.svg';
-import costumesIcon from './icon--costumes.svg';
-import soundsIcon from './icon--sounds.svg';
-
-const messages = defineMessages({
-    addExtension: {
-        id: 'gui.gui.addExtension',
-        description: 'Button to add an extension in the target pane',
-        defaultMessage: 'Add Extension'
-    }
-});
 
 // Cache this value to only retrieve it once the first time.
 // Assume that it doesn't change for a session.
@@ -54,68 +36,31 @@ let isRendererSupported = null;
 
 const GUIComponent = props => {
     const {
-        accountNavOpen,
         activeTabIndex,
         alertsVisible,
-        authorId,
-        authorThumbnailUrl,
-        authorUsername,
         basePath,
         backdropLibraryVisible,
-        backpackHost,
-        backpackVisible,
         blocksTabVisible,
         cardsVisible,
-        canChangeLanguage,
-        canCreateNew,
-        canEditTitle,
-        canManageFiles,
-        canRemix,
-        canSave,
-        canCreateCopy,
-        canShare,
         canUseCloud,
         children,
         connectionModalVisible,
         costumeLibraryVisible,
-        costumesTabVisible,
-        enableCommunity,
-        intl,
         isCreating,
         isFullScreen,
         isPlayerOnly,
         isRtl,
-        isShared,
         isTelemetryEnabled,
         loading,
-        logo,
-        renderLogin,
-        onClickAbout,
-        onClickAccountNav,
-        onCloseAccountNav,
-        onLogOut,
-        onOpenRegistration,
-        onToggleLoginOpen,
-        onActivateCostumesTab,
-        onActivateSoundsTab,
         onActivateTab,
-        onClickLogo,
-        onExtensionButtonClick,
-        onProjectTelemetryEvent,
         onRequestCloseBackdropLibrary,
         onRequestCloseCostumeLibrary,
         onRequestCloseTelemetryModal,
-        onSeeCommunity,
-        onShare,
         onShowPrivacyPolicy,
-        onStartSelectingFileUpload,
         onTelemetryModalCancel,
         onTelemetryModalOptIn,
         onTelemetryModalOptOut,
-        showComingSoon,
-        soundsTabVisible,
         stageSizeMode,
-        targetIsStage,
         telemetryModalVisible,
         tipsLibraryVisible,
         vm,
@@ -194,49 +139,12 @@ const GUIComponent = props => {
                         vm={vm}
                     />
                 ) : null}
-                {costumeLibraryVisible ? (
-                    <CostumeLibrary
-                        vm={vm}
-                        onRequestClose={onRequestCloseCostumeLibrary}
-                    />
-                ) : null}
                 {backdropLibraryVisible ? (
                     <BackdropLibrary
                         vm={vm}
                         onRequestClose={onRequestCloseBackdropLibrary}
                     />
                 ) : null}
-                <MenuBar
-                    accountNavOpen={accountNavOpen}
-                    authorId={authorId}
-                    authorThumbnailUrl={authorThumbnailUrl}
-                    authorUsername={authorUsername}
-                    canChangeLanguage={canChangeLanguage}
-                    canCreateCopy={canCreateCopy}
-                    canCreateNew={canCreateNew}
-                    canEditTitle={canEditTitle}
-                    canManageFiles={canManageFiles}
-                    canRemix={canRemix}
-                    canSave={canSave}
-                    canShare={canShare}
-                    className={styles.menuBarPosition}
-                    enableCommunity={enableCommunity}
-                    isShared={isShared}
-                    logo={logo}
-                    renderLogin={renderLogin}
-                    showComingSoon={showComingSoon}
-                    onClickAbout={onClickAbout}
-                    onClickAccountNav={onClickAccountNav}
-                    onClickLogo={onClickLogo}
-                    onCloseAccountNav={onCloseAccountNav}
-                    onLogOut={onLogOut}
-                    onOpenRegistration={onOpenRegistration}
-                    onProjectTelemetryEvent={onProjectTelemetryEvent}
-                    onSeeCommunity={onSeeCommunity}
-                    onShare={onShare}
-                    onStartSelectingFileUpload={onStartSelectingFileUpload}
-                    onToggleLoginOpen={onToggleLoginOpen}
-                />
                 <Box className={styles.bodyWrapper}>
                     <Box className={styles.flexWrapper}>
                         <Box className={styles.editorWrapper}>
@@ -248,55 +156,6 @@ const GUIComponent = props => {
                                 selectedTabPanelClassName={tabClassNames.tabPanelSelected}
                                 onSelect={onActivateTab}
                             >
-                                <TabList className={tabClassNames.tabList}>
-                                    <Tab className={tabClassNames.tab}>
-                                        <img
-                                            draggable={false}
-                                            src={codeIcon}
-                                        />
-                                        <FormattedMessage
-                                            defaultMessage="Code"
-                                            description="Button to get to the code panel"
-                                            id="gui.gui.codeTab"
-                                        />
-                                    </Tab>
-                                    <Tab
-                                        className={tabClassNames.tab}
-                                        onClick={onActivateCostumesTab}
-                                    >
-                                        <img
-                                            draggable={false}
-                                            src={costumesIcon}
-                                        />
-                                        {targetIsStage ? (
-                                            <FormattedMessage
-                                                defaultMessage="Backdrops"
-                                                description="Button to get to the backdrops panel"
-                                                id="gui.gui.backdropsTab"
-                                            />
-                                        ) : (
-                                            <FormattedMessage
-                                                defaultMessage="Costumes"
-                                                description="Button to get to the costumes panel"
-                                                id="gui.gui.costumesTab"
-                                            />
-                                        )}
-                                    </Tab>
-                                    <Tab
-                                        className={tabClassNames.tab}
-                                        onClick={onActivateSoundsTab}
-                                    >
-                                        <img
-                                            draggable={false}
-                                            src={soundsIcon}
-                                        />
-                                        <FormattedMessage
-                                            defaultMessage="Sounds"
-                                            description="Button to get to the sounds panel"
-                                            id="gui.gui.soundsTab"
-                                        />
-                                    </Tab>
-                                </TabList>
                                 <TabPanel className={tabClassNames.tabPanel}>
                                     <Box className={styles.blocksWrapper}>
                                         <Blocks
@@ -310,49 +169,11 @@ const GUIComponent = props => {
                                             vm={vm}
                                         />
                                     </Box>
-                                    <Box className={styles.extensionButtonContainer}>
-                                        <button
-                                            className={styles.extensionButton}
-                                            title={intl.formatMessage(messages.addExtension)}
-                                            onClick={onExtensionButtonClick}
-                                        >
-                                            <img
-                                                className={styles.extensionButtonIcon}
-                                                draggable={false}
-                                                src={addExtensionIcon}
-                                            />
-                                        </button>
-                                    </Box>
                                     <Box className={styles.watermark}>
                                         <Watermark />
                                     </Box>
                                 </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {costumesTabVisible ? <CostumeTab vm={vm} /> : null}
-                                </TabPanel>
-                                <TabPanel className={tabClassNames.tabPanel}>
-                                    {soundsTabVisible ? <SoundTab vm={vm} /> : null}
-                                </TabPanel>
                             </Tabs>
-                            {backpackVisible ? (
-                                <Backpack host={backpackHost} />
-                            ) : null}
-                        </Box>
-
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
-                            <StageWrapper
-                                isFullScreen={isFullScreen}
-                                isRendererSupported={isRendererSupported}
-                                isRtl={isRtl}
-                                stageSize={stageSize}
-                                vm={vm}
-                            />
-                            <Box className={styles.targetWrapper}>
-                                <TargetPane
-                                    stageSize={stageSize}
-                                    vm={vm}
-                                />
-                            </Box>
                         </Box>
                     </Box>
                 </Box>

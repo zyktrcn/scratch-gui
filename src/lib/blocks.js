@@ -353,5 +353,7 @@ export default function (vm) {
         return true;
     };
 
+    console.log('test', ScratchBlocks.Toolbox.CategoryMenu.prototype);
+
     return ScratchBlocks;
 }
