@@ -39,6 +39,39 @@ const addFunctionListener = (object, property, callback) => {
     };
 };
 
+const toolboxXML = '<xml id="toolbox-categories" style="display: none">' +
+'<category name="Action" id="action" colour="#4C97FF" secondaryColour="#3373CC">' +
+  '<block type="front_seconds" id="front_seconds">' +
+    '<value name="STEPS">' +
+      '<shadow type="math_number">' +
+        '<field name="NUM">3</field>' +
+      '</shadow>' +
+    '</value>' +
+  '</block>' +
+  '<block type="back_seconds" id="back_seconds">' +
+    '<value name="STEPS">' +
+      '<shadow type="math_number">' +
+        '<field name="NUM">3</field>' +
+      '</shadow>' +
+    '</value>' +
+  '</block>' +
+  '<block type="left_seconds" id="left_seconds">' +
+    '<value name="STEPS">' +
+      '<shadow type="math_number">' +
+        '<field name="NUM">3</field>' +
+      '</shadow>' +
+    '</value>' +
+  '</block>' +
+  '<block type="right_seconds" id="right_seconds">' +
+    '<value name="STEPS">' +
+      '<shadow type="math_number">' +
+        '<field name="NUM">3</field>' +
+      '</shadow>' +
+    '</value>' +
+  '</block>' +
+'</category>' +
+'</xml>';
+
 const DroppableBlocks = DropAreaHOC([
     DragConstants.BACKPACK_CODE
 ])(BlocksComponent);
@@ -92,10 +125,16 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML}
+            {rtl: this.props.isRtl}
         );
-        this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
 
+        const oParser = new DOMParser();
+        const dom = oParser.parseFromString(toolboxXML, 'text/xml');
+
+        this.workspace = this.ScratchBlocks.inject(this.blocks, {
+            ...workspaceConfig,
+            toolbox: dom.documentElement
+        });
         // Register buttons under new callback keys for creating variables,
         // lists, and procedures from extensions.
 
@@ -114,7 +153,7 @@ class Blocks extends React.Component {
         // Store the xml of the toolbox that is actually rendered.
         // This is used in componentDidUpdate instead of prevProps, because
         // the xml can change while e.g. on the costumes tab.
-        this._renderedToolboxXML = this.props.toolboxXML;
+        this._renderedToolboxXML = toolboxXML;
 
         // we actually never want the workspace to enable "refresh toolbox" - this basically re-renders the
         // entire toolbox every time we reset the workspace.  We call updateToolbox as a part of
@@ -127,6 +166,7 @@ class Blocks extends React.Component {
         // @todo change this when blockly supports UI events
         addFunctionListener(this.workspace, 'translate', this.onWorkspaceMetricsChange);
         addFunctionListener(this.workspace, 'zoom', this.onWorkspaceMetricsChange);
+
 
         this.attachVM();
         // Only update blocks/vm locale when visible to avoid sizing issues
@@ -156,7 +196,7 @@ class Blocks extends React.Component {
         // Only rerender the toolbox when the blocks are visible and the xml is
         // different from the previously rendered toolbox xml.
         // Do not check against prevProps.toolboxXML because that may not have been rendered.
-        if (this.props.isVisible && this.props.toolboxXML !== this._renderedToolboxXML) {
+        if (this.props.isVisible && toolboxXML !== this._renderedToolboxXML) {
             this.requestToolboxUpdate();
         }
 
@@ -214,8 +254,8 @@ class Blocks extends React.Component {
 
         const categoryId = this.workspace.toolbox_.getSelectedCategoryId();
         const offset = this.workspace.toolbox_.getCategoryScrollOffset();
-        this.workspace.updateToolbox(this.props.toolboxXML);
-        this._renderedToolboxXML = this.props.toolboxXML;
+        this.workspace.updateToolbox(toolboxXML);
+        this._renderedToolboxXML = toolboxXML;
 
         // In order to catch any changes that mutate the toolbox during "normal runtime"
         // (variable changes/etc), re-enable toolbox refresh.
@@ -354,9 +394,9 @@ class Blocks extends React.Component {
     }
     onWorkspaceUpdate (data) {
         // When we change sprites, update the toolbox to have the new sprite's blocks
-        const toolboxXML = this.getToolboxXML();
-        if (toolboxXML) {
-            this.props.updateToolboxState(toolboxXML);
+        const toolboxXMLRef = this.getToolboxXML();
+        if (toolboxXMLRef) {
+            this.props.updateToolboxState(toolboxXMLRef);
         }
 
         if (this.props.vm.editingTarget && !this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
@@ -452,9 +492,9 @@ class Blocks extends React.Component {
         defineBlocks(categoryInfo.blocks);
 
         // Update the toolbox with new blocks if possible
-        const toolboxXML = this.getToolboxXML();
-        if (toolboxXML) {
-            this.props.updateToolboxState(toolboxXML);
+        const toolboxXMLRef = this.getToolboxXML();
+        if (toolboxXMLRef) {
+            this.props.updateToolboxState(toolboxXMLRef);
         }
     }
     handleBlocksInfoUpdate (categoryInfo) {
