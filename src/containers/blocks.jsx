@@ -664,12 +664,12 @@ class Blocks extends React.Component {
                         onClick={this.handleSave}
                     >
                         <img
-                            src="../.././static/blocks-media/status-ready.svg"
+                            src="./static/blocks-media/status-ready.svg"
                             style={{width: '35px', height: '35px'}}
                         />
                     </div>
                     <div style={{position: 'absolute', right: '10px', top: '5px', zIndex: '9999'}}><img
-                        src="../.././static/blocks-media/delete-x.svg"
+                        src="./static/blocks-media/delete-x.svg"
                         style={{width: '35px', height: '35px'}}
                         onClick={this.handleExit}
                     /></div>
@@ -679,20 +679,6 @@ class Blocks extends React.Component {
                     onDrop={this.handleDrop}
                     {...props}
                 />
-                {this.state.prompt ? (
-                    <Prompt
-                        defaultValue={this.state.prompt.defaultValue}
-                        isStage={vm.runtime.getEditingTarget().isStage}
-                        showListMessage={this.state.prompt.varType === this.ScratchBlocks.LIST_VARIABLE_TYPE}
-                        label={this.state.prompt.message}
-                        showCloudOption={this.state.prompt.showCloudOption}
-                        showVariableOptions={this.state.prompt.showVariableOptions}
-                        title={this.state.prompt.title}
-                        vm={vm}
-                        onCancel={this.handlePromptClose}
-                        onOk={this.handlePromptCallback}
-                    />
-                ) : null}
             </React.Fragment>
         );
     }
