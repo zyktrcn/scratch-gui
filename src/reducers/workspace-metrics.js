@@ -1,7 +1,9 @@
 const UPDATE_METRICS = 'scratch-gui/workspace-metrics/UPDATE_METRICS';
+const UPDATE_UNDO_STACK = 'scratch-gui/workspace-metrics/UPDATE_UNDO_STACK';
 
 const initialState = {
-    targets: {}
+    targets: {},
+    undoStack: []
 };
 
 const reducer = function (state, action) {
@@ -18,6 +20,10 @@ const reducer = function (state, action) {
                 }
             })
         });
+    case UPDATE_UNDO_STACK:
+        return Object.assign({}, state, {
+            undoStack: Object.assign({}, state.undoStack, action.undoStack)
+        });
     default:
         return state;
     }
@@ -30,8 +36,16 @@ const updateMetrics = function (metrics) {
     };
 };
 
+const updateUndoStack = function (undoStack) {
+    return {
+        type: UPDATE_UNDO_STACK,
+        undoStack
+    };
+};
+
 export {
     reducer as default,
     initialState as workspaceMetricsInitialState,
-    updateMetrics
+    updateMetrics,
+    updateUndoStack
 };

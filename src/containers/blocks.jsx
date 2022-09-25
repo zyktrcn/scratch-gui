@@ -23,7 +23,7 @@ import {activateColorPicker} from '../reducers/color-picker';
 import {closeExtensionLibrary, openSoundRecorder, openConnectionModal} from '../reducers/modals';
 import {activateCustomProcedures, deactivateCustomProcedures} from '../reducers/custom-procedures';
 import {setConnectionModalExtensionId} from '../reducers/connection-modal';
-import {updateMetrics} from '../reducers/workspace-metrics';
+import {updateMetrics, updateUndoStack} from '../reducers/workspace-metrics';
 
 import {
     activateTab,
@@ -76,6 +76,8 @@ const DroppableBlocks = DropAreaHOC([
     DragConstants.BACKPACK_CODE
 ])(BlocksComponent);
 
+let timer = null;
+
 class Blocks extends React.Component {
     constructor (props) {
         super(props);
@@ -105,14 +107,16 @@ class Blocks extends React.Component {
             'onWorkspaceUpdate',
             'onWorkspaceMetricsChange',
             'setBlocks',
-            'setLocale'
+            'setLocale',
+            'handleSave'
         ]);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
 
         this.state = {
-            prompt: null
+            prompt: null,
+            showReady: false
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
@@ -303,6 +307,7 @@ class Blocks extends React.Component {
         this.props.vm.addListener('BLOCKSINFO_UPDATE', this.handleBlocksInfoUpdate);
         this.props.vm.addListener('PERIPHERAL_CONNECTED', this.handleStatusButtonUpdate);
         this.props.vm.addListener('PERIPHERAL_DISCONNECTED', this.handleStatusButtonUpdate);
+
     }
     detachVM () {
         this.props.vm.removeListener('SCRIPT_GLOW_ON', this.onScriptGlowOn);
@@ -338,6 +343,13 @@ class Blocks extends React.Component {
                 this.updateToolboxBlockValue(`${prefix}y`, Math.round(this.props.vm.editingTarget.y).toString());
             });
         }
+    }
+    handlerUndoStackUpdate () {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+            const filterStack = this.workspace.undoStack_.filter(item => !!item.xml);
+            this.props.updateUndoStack(filterStack);
+        }, 200);
     }
     onWorkspaceMetricsChange () {
         const target = this.props.vm.editingTarget;
@@ -393,6 +405,9 @@ class Blocks extends React.Component {
         }
     }
     onWorkspaceUpdate (data) {
+        this.setState({
+            showReady: true
+        });
         // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXMLRef = this.getToolboxXML();
         if (toolboxXMLRef) {
@@ -567,6 +582,55 @@ class Blocks extends React.Component {
                 this.updateToolbox(); // To show new variables/custom blocks
             });
     }
+    handleSave () {
+        const vm = this.props.vm;
+        vm.on('playgroundData', function handler (event) {
+            try {
+                const {blocks: {
+                    _blocks,
+                    _scripts
+                }} = event;
+                console.log('test', _blocks, _scripts);
+
+                const queue = [];
+                const startId = _scripts[0];
+                let startBlock = _blocks[startId];
+                const blockHandler = targetBlock => {
+                    const {inputs: {STEPS}} = targetBlock;
+                    const filedBlock = _blocks[STEPS.block];
+                    const value = filedBlock.fields.NUM.value;
+                    queue.push({
+                        cmd: targetBlock.opcode,
+                        value
+                    });
+                };
+                blockHandler(startBlock);
+                while (startBlock.next) {
+                    startBlock = _blocks[startBlock.next];
+                    blockHandler(startBlock);
+                }
+
+                const message = JSON.stringify({
+                    action: 'saveAndPop',
+                    arguments: {
+                        queue
+                    }
+                });
+                console.log('test', queue, message);
+                Print.postMessage(message);
+            } catch (e) {}
+            vm.off('playgroundData', handler);
+        });
+        vm.getPlaygroundData();
+    }
+    handleExit () {
+        try {
+            const message = JSON.stringify({
+                action: 'exit'
+            });
+            Print.postMessage(message);
+        } catch (e) {}
+    }
     render () {
         /* eslint-disable no-unused-vars */
         const {
@@ -590,9 +654,26 @@ class Blocks extends React.Component {
             workspaceMetrics,
             ...props
         } = this.props;
+        const {showReady} = this.state;
         /* eslint-enable no-unused-vars */
         return (
             <React.Fragment>
+                {showReady && <>
+                    <div
+                        style={{position: 'absolute', right: '27px', bottom: '165px', zIndex: '9999'}}
+                        onClick={this.handleSave}
+                    >
+                        <img
+                            src="../.././static/blocks-media/status-ready.svg"
+                            style={{width: '35px', height: '35px'}}
+                        />
+                    </div>
+                    <div style={{position: 'absolute', right: '10px', top: '5px', zIndex: '9999'}}><img
+                        src="../.././static/blocks-media/delete-x.svg"
+                        style={{width: '35px', height: '35px'}}
+                        onClick={this.handleExit}
+                    /></div>
+                </>}
                 <DroppableBlocks
                     componentRef={this.setBlocks}
                     onDrop={this.handleDrop}
@@ -657,6 +738,7 @@ Blocks.propTypes = {
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     toolboxXML: PropTypes.string,
     updateMetrics: PropTypes.func,
+    updateUndoStack: PropTypes.func,
     updateToolboxState: PropTypes.func,
     vm: PropTypes.instanceOf(VM).isRequired,
     workspaceMetrics: PropTypes.shape({
@@ -728,11 +810,14 @@ const mapDispatchToProps = dispatch => ({
     onRequestCloseCustomProcedures: data => {
         dispatch(deactivateCustomProcedures(data));
     },
-    updateToolboxState: toolboxXML => {
-        dispatch(updateToolbox(toolboxXML));
+    updateToolboxState: toolboxXMLRef => {
+        dispatch(updateToolbox(toolboxXMLRef));
     },
     updateMetrics: metrics => {
         dispatch(updateMetrics(metrics));
+    },
+    updateUndoStack: undoStack => {
+        dispatch(updateUndoStack(undoStack));
     }
 });
 
