@@ -609,19 +609,36 @@ class Blocks extends React.Component {
                 const queue = [];
                 const startId = _scripts[0];
                 let startBlock = _blocks[startId];
-                const blockHandler = targetBlock => {
-                    const {inputs: {STEPS}} = targetBlock;
-                    const filedBlock = _blocks[STEPS.block];
-                    const value = filedBlock.fields.NUM.value;
-                    queue.push({
+                const blockHandler = (targetBlock, list) => {
+                    if (!targetBlock || !list) return;
+                    const {inputs: {STEPS, TIMES, SUBSTACK}} = targetBlock;
+                    const target = STEPS || TIMES || {};
+                    const filedBlock = _blocks[target.block] || {};
+                    let value = 0;
+                    try {
+                        value = filedBlock.fields.NUM.value;
+                    } catch (error) {}
+
+                    const subQueue = [];
+                    if (SUBSTACK) {
+                        let childBlock = _blocks[SUBSTACK.block];
+                        blockHandler(childBlock, subQueue);
+                        while (childBlock.next) {
+                            childBlock = _blocks[childBlock.next];
+                            blockHandler(childBlock, subQueue);
+                        }
+                    }
+
+                    list.push({
                         cmd: targetBlock.opcode,
-                        value
+                        value,
+                        queue: subQueue
                     });
                 };
-                blockHandler(startBlock);
+                blockHandler(startBlock, queue);
                 while (startBlock.next) {
                     startBlock = _blocks[startBlock.next];
-                    blockHandler(startBlock);
+                    blockHandler(startBlock, queue);
                 }
 
                 const message = JSON.stringify({
@@ -632,7 +649,9 @@ class Blocks extends React.Component {
                 });
                 console.log('test', queue, message);
                 Print.postMessage(message);
-            } catch (e) {}
+            } catch (e) {
+                console.log('test err', e);
+            }
             vm.off('playgroundData', handler);
         });
         vm.getPlaygroundData();
