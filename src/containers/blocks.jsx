@@ -41,6 +41,20 @@ const addFunctionListener = (object, property, callback) => {
 
 const toolboxXML = '<xml id="toolbox-categories" style="display: none">' +
 '<category name="Action" id="action" colour="#4C97FF" secondaryColour="#3373CC">' +
+    '<block type="repeat_time" id="repeat_time">' +
+      '<value name="TIMES">' +
+        '<shadow type="math_whole_number">' +
+          '<field name="NUM">1</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
+    '<block type="control_wait" id="control_wait">' +
+      '<value name="DURATION">' +
+        '<shadow type="math_positive_number">' +
+          '<field name="NUM">1</field>' +
+        '</shadow>' +
+      '</value>' +
+    '</block>' +
   '<block type="front_seconds" id="front_seconds">' +
     '<value name="STEPS">' +
       '<shadow type="math_number">' +
